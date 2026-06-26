@@ -1,0 +1,30 @@
+Feedback về Audit:
+1. Mình thấy hướng dùng CloudWatch để lưu audit tạm thời là hợp lý, vì có thể tận dụng để xem log realtime, điều tra sự cố và query nhanh bằng Log Insights.
+
+2. S3 kết hợp Athena cũng phù hợp cho bài toán lưu trữ audit lâu dài. S3 đảm nhận vai trò lưu trữ cứng và Athena đáp ứng được nhu cầu truy xuất, query audit log khi cần.
+
+3. Về đề xuất bổ sung Glue, theo mình Glue chủ yếu hỗ trợ crawl schema và tạo Data Catalog/Table cho Athena, giúp quản lý dữ liệu thuận tiện hơn. Tuy nhiên, mình chưa thấy nhu cầu thực sự phải đầu tư nhiều vào việc tối ưu khả năng query audit log trong scope của dự án này.
+
+=> phần audit của TF3 nên tập trung vào các mục tiêu chính: lưu trữ an toàn, retention dài hạn và có khả năng truy xuất khi cần điều tra hoặc demo evidence. Nếu bổ sung Glue thì có thể xem là nice-to-have, nhưng không nên trở thành trọng tâm của thiết kế.
+
+SCOPE: 
+ Mục tiêu của audit trong TF3 là bảo đảm log được ghi nhận đầy đủ, lưu trữ an toàn (retention ≥90 ngày) và có thể truy xuất khi cần điều tra hoặc demo evidence. Không cần đầu tư xây dựng hệ thống phân tích, tìm kiếm hay tối ưu query audit log ở mức SIEM/Data Platform.
+
+Nếu flow 1 cái lớn hơn: ví dụ: 
+CloudWatch
+    ↓
+Kinesis Firehose
+    ↓
+S3 Data Lake
+    ↓
+Glue Catalog + Crawlers
+    ↓
+Athena
+    ↓
+OpenSearch
+    ↓
+QuickSight/Grafana
+    ↓
+SIEM + Compliance Reports + Forensics
+
+Thì nó sẽ vượt qua scope dự án hiện tại. Trở thành 1 phần triển khai hệ thống SIEM.

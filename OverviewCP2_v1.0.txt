@@ -1,0 +1,80 @@
+Tạo ngày: 22/06/26
+Version: 1.0
+_____________________________________________________________________________
+ĐỀ Tài: Self-Heal Engine
+ VP Engineering, 200+ microservice K8s. 80% on-call alert là known patterns
+TF3_SELFHEAL_LEARNER.md đã mô tả chi tiết và rõ các thông tin.
+Dưới đây là 1 số thông tin overview nhanh.
+ - Hộ thống chạy ok nhưng có 1 số vấn đề nhỏ có thể sử lý lập tức.Con người đang phải xử lý quá nhiều sự cố lặp lại có thể tự động hóa.
+ - Client muốn một Self-Heal Engine tự động xử lý phần lớn sự cố Kubernetes lặp lại, giảm on-call và chỉ gọi engineer khi cần thiết.
+
+Note: 
+ - Có hạng mục trao đổi khách hàng (Câu hỏi vào buổi chiều).
+ - Đợi thông tin tiếp theo về Phía AIOPs
+_________________________________________________________
+1) Time line
+T2: 22/06 -> T5: 02/T7
+Mỗi ngày 14h có standup 15 phút per task force.
+
+W11:
+ T2: Random pick, meeting "client"
+ T4: 
+  - (chiều) AI publish 3 contracts draft
+  - (chiều - đêm) : CDO review draft, note push-back.
+ T5: 
+ - (chiều) Approve document = PoC; ký 3 contracts AI (FREEZE) <-> CDO
+ -(sáng) tự tổ chức: AI và CDO trong task force co-design, push-back, sửa contracts. 
+ - AI nhóm deploy engine skeleton ngay T5 W11 chiều (cùng lúc với ký contract). (CDO có endpoint thật từ T6).
+ => (W11 T6 trở đi 2 team AI & CDO buid độc lập theo contract).
+ - Curveballs (15p).
+	NOTE: Lúc co-design T5 sáng, CDO cứ thoải mái push-back. Không có chuyện AI bảo gì CDO làm nấy. Push-back productive đúng chỗ thì sản phẩm cuối mới tốt.
+ T6: Bắt đầu build chính thức. CDO base IaC.
+ 
+W12
+ T2: 29/06 online
+  AM: 
+  - CDO: CI/CD canary, observability, integrate AI endpoint.	
+  PM:
+  - 14h standup. 
+  - 16h curveball #2 medium (30p).
+ T3:
+ AM:
+ - CDO: E2E test per platform.(call AI endpoint thật).
+ PM:
+ - 14-16h per-task force integration session. 
+ - 16h task force sync.
+ T4:
+ AM:
+ - Polish E2E, slides draft.
+ PM: 
+ - 4h curveball #3 chaos (60p). (curveball).
+ - 16-17h respond + final polish. 
+ - 17-22h dry-run + buffer fix bug.
+ T5: 
+  - 8:00 AM. code freeze +  git tag final. (được sửa slide + script)
+  - Sản phẩm chạy được, panel pitch. consulting engagement.
+  - 13h30-15h15 TF3 (Self-Heal)
+  - 17-18h calibration + tier reveal.
+__________________________________________________________
+2) Thông tin 1
+- 3 contracts cho CDO consume (Team AI viết) (PM_T5-W11 sẽ có)
+- deploy engine cho CDO dùng (Team AI làm)
+- CDO test integration bằng mock endpoint (dùng curl trả về fake response đúng schema, verify code path của mình.) => W12 T3 call Ai end endpoint thật để tesr E2E.
+____________________________________________________________
+3) Thông tin 2
+- W11(document): Design Doc, Differentiation Angle, ADRs, base IaC
+- W12:  build, integrate, chaos test, polish slides
+- Mỗi lần curveball xong, document response vào curveball-responses.md. Buổi chấm panel sẽ hỏi team xử lý ra sao.
+- Build infra hosting AI engine (theo góc nhìn riêng)
+- Giữa các Team CDO sẽ cạnh tranh nhau chất lượng thực hiện.
+
+Nhóm CDO (template templates/cdo/):
+ - final-build/: IaC + manifests integrated
+ - docs/05_cost_analysis.md
+ - docs/07_test_eval_report.md (SLO evidence: p99 latency, availability, cost + multi-tenant isolation test)
+ - SLIDES.pdf
+ - demo-video.mp4
+ - curveball-responses.md
+ - individual-pitches.md
+ - retrospective.md
+ -  reference/CAPSTONE_EVIDENCE_PACK_FORMAT.md
