@@ -54,7 +54,7 @@ _INTERNAL_SIGNAL_MAP = {
 }
 
 _SECRET_PATTERNS = [
-    (re.compile(r"(?i)(password|passwd|pwd)\s*=\s*[^&\s]+"), r"\1=[REDACTED]"),
+    (re.compile(r"(?i)(password|passwd|pwd)\s*[:=]\s*[^&\s]+"), r"\1=[REDACTED]"),
     (re.compile(r"(?i)(token|api[_-]?key|secret)\s*[:=]\s*[A-Za-z0-9._~+/=-]{8,}"), r"\1=[REDACTED]"),
     (re.compile(r"(?i)(authorization:\s*bearer\s+)[A-Za-z0-9._~+/=-]+"), r"\1[REDACTED]"),
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "[EMAIL_REDACTED]"),
@@ -113,6 +113,14 @@ def normalize_window(points: list[dict[str, Any]], source_mode: str) -> list[dic
     return [normalize_point(point, source_mode) for point in points]
 
 
+def validate_window(points: list[dict[str, Any]]) -> None:
+    for index, point in enumerate(points):
+        try:
+            validate_point(point)
+        except TelemetryContractError as exc:
+            raise TelemetryContractError(f"telemetry_window[{index}]: {exc}") from exc
+
+
 def auto_normalize(raw: Any) -> list[dict[str, Any]]:
     """Detect common raw telemetry shapes and return contract telemetry points."""
     if isinstance(raw, dict) and "telemetry_window" in raw:
@@ -148,7 +156,9 @@ def validate_point(point: dict[str, Any]) -> None:
     if extra:
         raise TelemetryContractError(f"unsupported top-level fields: {', '.join(extra)}")
 
-    _normalize_timestamp(point["ts"])
+    normalized_ts = _normalize_timestamp(point["ts"])
+    if point["ts"] != normalized_ts:
+        raise TelemetryContractError("ts must be RFC3339 UTC with millisecond precision")
     try:
         parsed = uuid.UUID(str(point["tenant_id"]))
     except ValueError as exc:
