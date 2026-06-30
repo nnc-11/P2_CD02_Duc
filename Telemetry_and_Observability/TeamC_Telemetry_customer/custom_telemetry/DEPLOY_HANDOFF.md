@@ -7,7 +7,7 @@ Team C bàn giao lớp normalize telemetry, không bàn giao AI Engine hoặc ex
 Thư mục:
 
 ```text
-P2_CD02_Duc/TeamC/custom_telemetry/
+P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/
 ```
 
 Source of truth contract:
@@ -75,7 +75,7 @@ Downstream sử dụng output này để:
 Prometheus:
 
 ```bash
-cd /mnt/g/XBrain/CDO-02_capstone/P2_CD02_Duc/TeamC/custom_telemetry
+cd /mnt/g/XBrain/CDO-02_capstone/P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry
 
 python3 normalize_telemetry.py prometheus \
   --input /tmp/prom_query.json \

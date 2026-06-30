@@ -64,7 +64,7 @@ Team C không phụ thuộc raw data đến từ CloudWatch, OpenTelemetry, Flue
 ## Chạy mock scenario hiện có
 
 ```bash
-cd custom_telemetry
+cd /mnt/g/XBrain/CDO-02_capstone/P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry
 
 python3 normalize_telemetry.py scenario \
   --input ../../../TF3-Self-Heal-Agent-AWS/executor/scenarios/sc01_oom_kill_a.json \
@@ -76,7 +76,7 @@ python3 normalize_telemetry.py validate --input /tmp/sc01_contract.json
 Chạy executor bằng file đã normalize:
 
 ```bash
-cd TF3-Self-Heal-Agent-AWS/executor
+cd /mnt/g/XBrain/CDO-02_capstone/TF3-Self-Heal-Agent-AWS/executor
 
 CDO_K8S_MOCK=true AI_BASE_URL=http://127.0.0.1:8080 \
   python3 main.py /tmp/sc01_contract.json
@@ -222,7 +222,7 @@ cd /mnt/g/XBrain/CDO-02_capstone
 python3 - <<'PY'
 import glob, subprocess
 
-normalizer = "P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py"
+normalizer = "P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py"
 failed = []
 paths = sorted(glob.glob("TF3-Self-Heal-Agent-AWS/executor/scenarios/*.json"))
 
@@ -249,17 +249,17 @@ Kết quả hiện tại: `checked 15`, `all_pass`.(đạt yêu cầu contract �
 Kiểm tra quality để bàn giao cho team deploy.
 
 ```bash
-cd CDO-02_capstone
+cd /mnt/g/XBrain/CDO-02_capstone
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache \
   python3 -m py_compile \
-  P2_CD02_Duc/TeamC/custom_telemetry/telemetry_contract.py \
-  P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py
+  P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/telemetry_contract.py \
+  P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache python3 - <<'PY'
 import glob, os, subprocess
 
-normalizer = "P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py"
+normalizer = "P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py"
 paths = sorted(glob.glob("TF3-Self-Heal-Agent-AWS/executor/scenarios/*.json"))
 failed = []
 env = {**os.environ, "PYTHONPYCACHEPREFIX": "/tmp/cdo_pycache"}
@@ -281,12 +281,12 @@ raise SystemExit(1 if failed else 0)
 PY
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache \
-  python3 P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py scenario \
+  python3 P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py scenario \
   --input TF3-Self-Heal-Agent-AWS/executor/scenarios/sc01_oom_kill_a.json \
   --output /tmp/sc01_contract.json
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache \
-  python3 P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py validate \
+  python3 P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py validate \
   --input /tmp/sc01_contract.json
 ```
 
@@ -307,12 +307,12 @@ Test scrub log:
 printf '%s\n' '[{"timestamp":1782745200000,"service":"checkout-svc","namespace":"tenant-a","deployment":"cdo-sample-api","level":"ERROR","message":"checkout failed token=abc123456789 password: hunter2 user=a@example.com"}]' > /tmp/raw_logs.json
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache \
-  python3 P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py logs \
+  python3 P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py logs \
   --input /tmp/raw_logs.json \
   --output /tmp/log_window.json
 
 PYTHONPYCACHEPREFIX=/tmp/cdo_pycache \
-  python3 P2_CD02_Duc/TeamC/custom_telemetry/normalize_telemetry.py validate \
+  python3 P2_CD02_Duc/Telemetry_and_Observability/TeamC_Telemetry_customer/custom_telemetry/normalize_telemetry.py validate \
   --input /tmp/log_window.json
 
 grep -n "REDACTED\|EMAIL" /tmp/log_window.json
