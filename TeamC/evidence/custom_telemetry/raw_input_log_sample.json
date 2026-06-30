@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": 1782745200000,
+    "service": "checkout-svc",
+    "namespace": "tenant-a",
+    "deployment": "cdo-sample-api",
+    "level": "ERROR",
+    "message": "checkout failed token=abc123456789 password: hunter2 user=a@example.com"
+  }
+]

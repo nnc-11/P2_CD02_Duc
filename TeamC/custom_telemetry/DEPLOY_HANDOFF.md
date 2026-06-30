@@ -34,15 +34,15 @@ không cần package ngoài standard library
 
 ## Input từ platform
 
-Deploy/platform có thể đưa một trong các loại raw input sau:
+Team C không phụ thuộc dữ liệu được lấy bằng CloudWatch, OpenTelemetry, Fluent Bit hay tool cụ thể nào. Deploy/platform chỉ cần đưa raw JSON vào adapter theo một trong các shape dưới đây:
 
 | Source | Format | CLI mode |
 |---|---|---|
-| Prometheus HTTP API | JSON từ `/api/v1/query` | `prometheus` |
-| Kubernetes events | `kubectl get events -A -o json` | `k8s-events` |
-| App logs / CloudWatch / Fluent Bit | JSON event/list hoặc `logEvents[]` | `logs` |
-| OpenTelemetry spans | JSON list spans | `otel-spans` |
-| OTLP export | JSON có `resourceSpans[]` | `otlp-export` |
+| Metric raw JSON | Prometheus-compatible query result hoặc metric JSON tương đương | `prometheus` |
+| Kubernetes event raw JSON | Event list JSON từ cluster/platform | `k8s-events` |
+| Log raw JSON | JSON event/list hoặc `logEvents[]` từ collector bất kỳ | `logs` |
+| Trace span raw JSON | JSON list spans | `otel-spans` |
+| Trace export raw JSON | JSON có `resourceSpans[]` | `otlp-export` |
 | Unknown/common shape | JSON raw bất kỳ được hỗ trợ | `auto` |
 
 ## Output cho downstream
