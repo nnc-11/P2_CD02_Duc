@@ -6,6 +6,15 @@
 
 ---
 
+## 1. Cover
+
+| Trường | Giá trị |
+| --- | --- |
+| **Nhóm** | CDO-02 |
+| **Topic** | TF3_SELFHEAL_LEARNER |
+| **Thành viên** | NGô Hữu Tài, Phạm Tùng Dương, Hà Tây Nguyên, Ka Phu Đông, Lê Văn Hải, Nguyễn Văn Toàn, Nguyễn Đỗ Hoàng Phúc, Trần Văn Đức, Nguyễn Thị Mến, Nguyễn Đức Tài |
+| **Repo** |  |
+
 ---
 
 ## 1. Mục Đích & Nguyên Tắc Cốt Lõi
@@ -72,9 +81,9 @@ CDO-02 cần submit tổng cộng **7 files** trong thư mục `docs/`:
 
 | Contract | File | Trạng thái |
 |---|---|---|
-| Telemetry Contract | `new-contract/telemetry-contract.md` | ✅ Signed 2026-06-25 |
-| AI API Contract | `new-contract/ai-api-contract.md` | ✅ Signed 2026-06-25 |
-| Deployment Contract | `new-contract/deployment-contract.md` | ✅ Signed 2026-06-25 |
+| Telemetry Contract | `new-contract/telemetry-contract.md` | ✅ Signed 2026-06-26 |
+| AI API Contract | `new-contract/ai-api-contract.md` | ✅ Signed 2026-06-26 |
+| Deployment Contract | `new-contract/deployment-contract.md` | ✅ Signed 2026-06-26 |
 
 ---
 
@@ -116,9 +125,6 @@ CDO-02 cần submit tổng cộng **7 files** trong thư mục `docs/`:
 - Safety checkpoints: dry-run, blast-radius, verify, rollback, circuit breaker
 
 ## 4. Hướng khác biệt (Differentiation Angle) — KEY
-> **Hướng dẫn Evidence:** Cần chứng minh angle được declare sớm.
-> Chạy lệnh: `git log --oneline --after="2026-06-22" --before="2026-06-24" -- docs/01_requirements_analysis.md`
-> Paste output vào đây để chứng minh commit lock angle.
 
 - Angle: K8s-heavy / Kubernetes Workflow Orchestration
 - Why: TF3 là bài toán self-heal trên K8s, CDO-02 chọn thao tác trực tiếp K8s workload
@@ -133,8 +139,6 @@ CDO-02 cần submit tổng cộng **7 files** trong thư mục `docs/`:
 - Không cho AI gọi K8s trực tiếp
 - Chỉ sandbox + synthetic workload
 
-> **Hướng dẫn Evidence:** Cuối doc, paste lịch sử git để chứng minh doc không được viết 1 cục.
-> Chạy lệnh: `git log --pretty=format:"%h %ad %s" --date=short -- docs/01_requirements_analysis.md`
 ```
 
 ---
@@ -147,20 +151,11 @@ CDO-02 cần submit tổng cộng **7 files** trong thư mục `docs/`:
 # Infrastructure Design - Task Force 3 Self-Heal Engine - CDO-02
 
 ## 1. Architecture diagram
-> **Hướng dẫn Evidence:** Chèn Architecture diagram. Dùng Mermaid inline hoặc export PNG.
-> Đã có sẵn file: `docs/image-1.png` hoặc `docs/docs_ObservabilityStack/picture/infra-architecture.png`.
 
 Mermaid hoặc PNG — CDO executor, AI Engine, EKS, Safety Gate, Audit, Observability.
 Caption bắt buộc + 2-3 dòng giải thích.
 
 ## 2. Component table
-> **Hướng dẫn Evidence:** Chứng minh EKS và Infra đang chạy thực tế:
-> 1. EKS Cluster: Chụp Screenshot AWS Console → EKS → Clusters. Lệnh: `kubectl cluster-info`
-> 2. Node group healthy: Chụp Screenshot EKS → Node Groups. Lệnh: `kubectl get nodes -o wide`
-> 3. Namespace list (chứng minh tenant isolation): Lệnh `kubectl get ns -o wide`
-> 4. VPC topology: Chụp VPC Console → Your VPCs và Subnets.
-> 5. Terraform state: Lệnh `cd infra/envs/dev && terraform state list` và `terraform plan`
-> Dán các screenshot/output tương ứng vào dưới bảng này.
 
 | Component | Service | Vai trò | Ghi chú |
 |---|---|---|---|
@@ -178,24 +173,28 @@ Caption bắt buộc + 2-3 dòng giải thích.
 - **Khả năng kiểm toán và toàn vẹn dữ liệu**: Kết hợp S3 Object Lock (WORM) và DynamoDB (Idempotency) đảm bảo mọi hành động can thiệp của AI đều có vết, không thể xóa sửa, và không xảy ra tình trạng chạy đè kịch bản.
 
 ## 4. Multi-tenant approach
-- Namespace-based: tenant-a, tenant-b, self-heal-system
-- Isolation: RBAC, NetworkPolicy, Kyverno admission
-- Noisy neighbor mitigation: rate-limit per tenant (≤100 RPS detect, ≤10 RPS decide/verify)
+Mô hình hỗ trợ đa khách hàng (Multi-tenant) được triển khai thông qua **cơ chế cô lập theo Namespace (Namespace-based isolation)**. Trong môi trường thực tế, mỗi tenant sẽ được cấp phát một namespace riêng (ví dụ: `tenant-a`, `tenant-b`), trong khi các thành phần cốt lõi của Self-Heal Agent nằm tại `self-heal-system`.
+Cấu trúc bảo mật và cô lập được thực hiện qua 3 lớp:
+1. **RBAC**: Giới hạn quyền hạn của ServiceAccount, đảm bảo Executor chỉ có thể thao tác (Restart, Patch, Scale) đúng trong namespace của tenant gặp sự cố.
+2. **NetworkPolicy**: Ngăn chặn tuyệt đối các luồng giao tiếp chéo giữa các tenant ở tầng network.
+3. **Kyverno Admission**: Đóng vai trò như một chốt chặn cuối cùng (Safety Gate), giới hạn tài nguyên cấp phát (ví dụ: cấm vượt quá 10 Replicas hoặc 4Gi Memory) để ngăn chặn hiệu ứng "Noisy neighbor" (tenant này chiếm dụng tài nguyên làm sập tenant khác). Thêm vào đó, cơ chế rate-limit (tối đa 100 RPS cho phase detect và 10 RPS cho quyết định) giúp cân bằng tải hệ thống.
 
-## 5. Alternatives considered (KEY section — lấy điểm)
-- Serverless-first: ít ops nhưng không sát K8s workload
-- Managed-services heavy: khó thể hiện operator control
-- Event-driven hybrid: over-engineer trong scope capstone
+## 5. Alternatives considered (Các phương án thay thế đã cân nhắc)
+Trong quá trình thiết kế kiến trúc, chúng tôi đã đánh giá các phương án thay thế sau trước khi chốt hướng đi K8s-heavy:
+- **Phương án Serverless-first (dùng AWS Lambda & Step Functions)**: Phương án này có ưu điểm là giảm tải công việc vận hành (ít ops) và dễ dàng scale. Tuy nhiên, chúng tôi từ chối vì nó không bám sát vào tính chất cốt lõi của K8s workload. Việc gọi K8s API từ bên ngoài qua Lambda đòi hỏi phải quản lý Secret và kubeconfig khá phức tạp, đồng thời làm mất đi sự linh hoạt của mô hình GitOps/Operator.
+- **Phương án Managed-services heavy (dùng toàn bộ giải pháp trả phí AWS)**: Rất ổn định nhưng khó thể hiện được kỹ năng thiết kế, kiểm soát tài nguyên của người kỹ sư, đồng thời chi phí duy trì hàng tháng sẽ vượt ngân sách dự kiến của bài toán Capstone.
+- **Phương án Event-driven hybrid (Microservices Event Sourcing)**: Thiết kế dựa trên Kafka/EventBridge cho mọi component. Phương án này bị loại bỏ vì quá cồng kềnh (over-engineer), không phù hợp với quy mô và thời gian triển khai của dự án.
 
 ## 6. Luồng xử lý chính (Data flow)
-alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI /v1/decide → Safety Gate → dry-run → execute → AI /v1/verify → audit
+Luồng dữ liệu và quá trình ra quyết định của Self-Heal Agent diễn ra một cách tuần tự, đảm bảo an toàn tuyệt đối qua từng chốt chặn. 
+Đầu tiên, hệ thống ghi nhận **Alert** từ hạ tầng, thu thập **Telemetry** (như logs/metrics) và đưa vào **SQS buffer** để xử lý bất đồng bộ. Sau đó, dữ liệu được truyền cho AI qua endpoint `/v1/detect` để phân loại sự cố. Trước khi đi tiếp, luồng dữ liệu phải vượt qua **Pre-Decide Gate** (nhằm lọc bỏ rác và thông tin nhiễu). 
+Khi AI đưa ra giải pháp khắc phục qua `/v1/decide`, lệnh này bị tạm giữ tại **Safety Gate**. Tại đây, hệ thống thực hiện `dry-run` (chạy thử nghiệm giả lập) nhằm đánh giá "blast-radius" (phạm vi ảnh hưởng). Chỉ khi hệ thống xác nhận hành động này nằm trong mức an toàn cho phép, lệnh mới được chính thức **execute** xuống cluster. Cuối cùng, hệ thống gọi `/v1/verify` để đánh giá kết quả phục hồi và đẩy toàn bộ lịch sử thao tác vào hệ thống **Audit**.
 
-## 7. Failure modes + recovery
-| Failure | Detection | Recovery | RTO/RPO |
-|---|---|---|---|
-| AI timeout/503 | HTTP timeout | No execute, escalate + audit | < 60s |
-| Safety gate deny | Gate check | Escalate, ghi audit | Immediate |
-| Execute fail | K8s API error | Rollback + circuit breaker | < 120s |
+## 7. Failure modes + recovery (Xử lý sự cố và phục hồi)
+Hệ thống được thiết kế với cơ chế tự bảo vệ và phục hồi linh hoạt (Resilience) trong mọi tình huống rủi ro:
+- **Khi AI bị Timeout hoặc lỗi 503:** Executor sẽ bắt lỗi HTTP Timeout (thường cấu hình dưới 5s). Ngay lập tức, hệ thống hủy bỏ chu trình tự động (No execute), ghi log cảnh báo vào hệ thống Audit và leo thang (escalate) trực tiếp cho kỹ sư trực ca (On-call Engineer). Thời gian phục hồi (RTO) ở mức < 60s.
+- **Khi Safety Gate từ chối hành động (Deny):** Nếu AI đề xuất một thao tác vượt quá giới hạn (ví dụ: scale lên 100 pods), Gate Check sẽ bắt được lỗi này và từ chối thực thi ngay lập tức (Immediate RTO). Hệ thống sẽ escalate sự cố và ghi nhận toàn bộ payload của AI vào Audit log phục vụ quá trình Post-mortem sau này.
+- **Khi quá trình Execute bị lỗi K8s API:** Trong trường hợp thao tác thực thi bị từ chối do K8s cluster (như conflict state hoặc rớt mạng), module Circuit Breaker (cầu dao tự động) sẽ được kích hoạt. Lệnh thực thi sẽ bị ngắt hoàn toàn và hệ thống sẽ tự động gọi luồng Rollback để trả môi trường về trạng thái ổn định ban đầu (RTO < 120s).
 ```
 
 ---
@@ -208,12 +207,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 # Security Design - Task Force 3 Self-Heal Engine - CDO-02
 
 ## 1. IAM model
-> **Hướng dẫn Evidence:** Chứng minh RBAC và IAM IRSA.
-> 1. RBAC Roles: `kubectl get roles -n tenant-a -o yaml`, `kubectl get rolebindings -n tenant-a`
-> 2. ClusterRoles cho executor: `kubectl get clusterroles | grep -i "executor\|self-heal"`
-> 3. ServiceAccount: `kubectl get sa -n self-heal-system -o yaml`
-> 4. IAM Roles (IRSA): Chụp AWS IAM Console → Roles → tab "Permissions" của role executor và AI engine.
-> Paste text/ảnh vào đây.
 
 - IRSA (IAM Roles for Service Accounts) cho executor + AI Engine
 - Least privilege: executor chỉ có quyền restart/scale/patch trong allowed namespaces
@@ -232,9 +225,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 - `.gitignore` + `gitleaks` scan để chặn secret commit
 
 ## 3. Network policy
-> **Hướng dẫn Evidence:** Chứng minh chặn cross-tenant.
-> Lệnh get policies: `kubectl get networkpolicies --all-namespaces -o yaml`
-> Paste yaml output vào đây.
 
 - VPC topology: private subnets, NAT gateway, VPC endpoints (S3/DynamoDB)
 - NetworkPolicy chặn **inter-tenant communication** (tenant-a ↔ tenant-b blocked)
@@ -243,13 +233,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 - WAF/Shield: không implement trong sandbox, documented cho production consideration
 
 ## 4. Audit trail
-> **Hướng dẫn Evidence:** Chứng minh S3 Object Lock và Audit Query.
-> 1. S3 Audit list: `aws s3 ls s3://<audit-bucket-name>/ --recursive | head -30`
-> 2. Sample record: `aws s3 cp s3://...` rồi show file json content.
-> 3. S3 Object Lock: Chụp tab Properties bucket S3 thấy Governance mode enabled. Lệnh: `aws s3api get-object-lock-configuration --bucket <audit-bucket>`
-> 4. CloudWatch Logs: Query logs bằng correlation_id và chụp kết quả.
-> 5. DynamoDB idempotency: Chụp console DynamoDB bảng idempotency có chứa records.
-> Paste các output và screenshot vào đây.
 
 - Format: JSON schema, keyed by `correlation_id`
 - Storage: S3 Object Lock (Governance mode), retention ≥ 90 ngày
@@ -269,11 +252,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
   - Không lưu PII trong audit log (chỉ `tenant_id`, `correlation_id`, action metadata)
 
 ## 6. Safety Gate (app-level security — CDO-02 specific)
-> **Hướng dẫn Evidence:** Chứng minh Safety Gate và Kyverno hoạt động.
-> 1. Kyverno policies: `kubectl get clusterpolicies -o wide`
-> 2. Kyverno deny test: Thử apply file yaml Deployment có replicas=15 hoặc memory=8Gi vào tenant-a, lưu log lỗi bị Kyverno chặn.
-> 3. RBAC Abuse test: Lệnh `kubectl auth can-i --as=system:serviceaccount:platform:self-heal-executor list pods -n kube-system` (Expected: no).
-> Paste output test vào đây.
 
 - Validate: `tenant_id` match, namespace trong `allowed_namespaces`
 - Blast-radius check: replicas ≤ 10, memory ≤ 4Gi
@@ -308,34 +286,23 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 # Deployment & CI/CD Design - Task Force 3 Self-Heal Engine - CDO-02
 
 ## 1. IaC strategy
-> **Hướng dẫn Evidence:** Chứng minh Terraform modules.
-> Lệnh in tree: `tree infra/modules/` hoặc `Get-ChildItem -Recurse infra/modules -Name` (Windows).
-> Log apply: Copy output của lệnh `terraform apply`.
 
 - Tool: Terraform >= 1.10
 - Module structure: vpc/, eks/, iam/, observability/, audit/, kyverno/, argocd/
 - State: S3 backend (target), hiện đang local state (known gap)
 
 ## 2. CI/CD pipeline
-> **Hướng dẫn Evidence:** Chụp screenshot GitHub Actions chạy thành công (build -> test -> scan -> deploy). Paste ảnh vào đây.
 
 - GitHub Actions: lint → test → build → scan → deploy
 - Quality gates: Terraform plan review, container image scan
 
 ## 3. GitOps — ArgoCD
-> **Hướng dẫn Evidence:** Chứng minh ArgoCD hoạt động.
-> 1. Dashboard: Chụp trang chính ArgoCD UI thấy các app báo Synced/Healthy.
-> 2. App detail: Click vào 1 app, chụp resource tree.
-> 3. CLI: `kubectl get applications -n argocd -o wide`
 
 - ArgoCD sync manifests/ → EKS cluster
 - Sync waves: namespaces → RBAC → workloads → executor → AI Engine
 - Drift detection: ArgoCD auto-sync
 
 ## 4. Deployment strategy
-> **Hướng dẫn Evidence:** Chứng minh Executor & AI deploy thành công.
-> Lệnh: `kubectl get deploy,rs,pods -n self-heal-system -o wide`
-> Lệnh list all helm: `helm list --all-namespaces`
 
 - Deferred actions: Git commit → ArgoCD sync (GitOps path)
 - Urgent actions: Direct K8s API (RTO < 60s)
@@ -360,7 +327,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 # Cost Analysis - Task Force 3 Self-Heal Engine - CDO-02
 
 ## 1. Cost model per component
-> **Hướng dẫn Evidence:** Chụp màn hình EC2 Instances đang chạy thực tế (Console -> Instances -> filter Running).
 
 | Component | Unit cost | Usage (sandbox 10 days) | Total |
 |---|---|---|---|
@@ -391,10 +357,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 - CDO-02: ước tính ~$80/tenant/sandbox — trade-off: EKS cluster cost cao nhưng sát đề K8s-heavy
 
 ## 5. Measured actual (capstone) — W12 REQUIRED
-> **Hướng dẫn Evidence:** Chụp số liệu tiêu hao thực tế. KHÔNG được chỉ estimate.
-> 1. AWS Cost Explorer theo Service: Chụp biểu đồ Daily + Group by Service. (Có thể export CSV file và đính kèm `docs/assets/evidence/cost/`).
-> 2. AWS Billing Dashboard: Chụp "Month-to-date costs by service".
-> Paste hình ảnh vào đây.
 
 - AWS Cost Explorer data split by service
 - Screenshot hoặc CSV từ AWS Billing
@@ -410,9 +372,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 # Test & Eval Report - Task Force 3 Self-Heal Engine - CDO-02
 
 ## 1. Test coverage
-> **Hướng dẫn Evidence:** Lưu log chạy file test runner.
-> Lệnh chạy scenario: `python run_scenarios.py 2>&1 | tee ../docs/assets/evidence/test/scenario-run-output.txt`
-> Lệnh unit test: `python -m pytest tests/ -v --tb=short`
 
 | Type | Tool | Scope | Status |
 |---|---|---|---|
@@ -424,11 +383,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 | Security test | RBAC abuse cases | Cross-tenant deny | Planned → Done |
 
 ## 2. Test Case Matrix (≥10 scenarios)
-> **Hướng dẫn Evidence:** Cần chứng minh cụ thể bằng logs cho các test case cực trị:
-> - **TC-01:** Log restart pod. `kubectl get events -n tenant-a --sort-by='.lastTimestamp'`
-> - **TC-03:** Log executor vá lỗi OOM. Lệnh `kubectl logs -n self-heal-system deploy/self-heal-executor | grep OOM`
-> - **TC-07 (Cross-tenant):** PHẢI thấy DENIED trong log khi tenant-a định đụng vào tenant-b.
-> - **TC-08 (AI timeout):** Log báo timeout và escalate action.
 
 | ID | Scenario | Tenant | Expected result |
 |---|---|---|---|
@@ -444,10 +398,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 | TC-10 | Disallowed namespace | tenant-a | DENIED by safety gate |
 
 ## 3. SLO Evidence
-> **Hướng dẫn Evidence:** Đo đạc SLO thực tế.
-> 1. Executor uptime: `kubectl get pods -n self-heal-system -o wide` (chứng minh restart count = 0)
-> 2. AI Latency: Chụp màn hình CloudWatch Metrics cho request latency.
-> 3. Trace latency: `kubectl logs -n self-heal-system deploy/self-heal-executor | grep latency`
 
 | SLO | Target | Measured | Pass/Fail |
 |---|---|---|---|
@@ -460,16 +410,12 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 | Audit coverage | 100% | TBD | TBD |
 
 ## 4. Chaos test results (Curveball — W12)
-> **Hướng dẫn Evidence:** Khi nhận curveball (yêu cầu thay đổi luồng/tính năng bất ngờ từ giáo viên):
-> Ghi lại mô tả curveball, design thay đổi như thế nào, và paste output test của scenario sau khi adapt. Viết 1 ADR mới giải thích quyết định thay đổi này.
 
 - Curveball #1 (small): ... response + outcome
 - Curveball #2 (medium): ... response + outcome
 - Curveball #3 (chaos): ... response + outcome
 
 ## 5. Security test
-> **Hướng dẫn Evidence:** Test thử bảo mật rò rỉ secret trong log.
-> Lệnh `kubectl logs -n self-heal-system deploy/self-heal-executor | grep -i "password\|secret\|token\|key"` (Kỳ vọng: rỗng)
 
 - Cross-tenant deny: confirmed via TC-07
 - RBAC least privilege: verified
@@ -481,7 +427,6 @@ alert → telemetry → SQS buffer → AI /v1/detect → Pre-Decide Gate → AI 
 | TBD | TBD | TBD | TBD |
 
 ## 7. Load test results
-> **Hướng dẫn Evidence:** Chạy k6/Locust và capture file output k6 (json/html) hoặc log `run_scenarios.py` liên tục. Capture resource usage: `kubectl top pods -n self-heal-system` và `kubectl top nodes`.
 
 - Tool: k6/Locust
 - Synthetic load: X concurrent scenarios
