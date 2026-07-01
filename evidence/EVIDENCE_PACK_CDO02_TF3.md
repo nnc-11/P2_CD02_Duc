@@ -173,8 +173,9 @@ Caption bắt buộc + 2-3 dòng giải thích.
 | SQS | Telemetry Buffer | CDO-internal buffer | AI không pull từ SQS |
 
 ## 3. Differentiation angle deep-dive — K8s-heavy
-- Tại sao K8s-heavy? Self-heal cần thao tác trực tiếp RBAC, namespace, workload
-- Vượt trội: demo safety gate + RBAC isolation + blast-radius thật trên K8s
+- **Tận dụng tối đa K8s-native constructs**: Executor chạy trực tiếp dưới dạng Pod trong cluster, tương tác sát sườn với Kubernetes API để điều khiển trực tiếp workload, deployment và service.
+- **Bảo mật và cô lập (Isolation) rõ ràng**: Xử lý Self-Heal trong môi trường Multi-tenant thông qua Namespace-based isolation, áp dụng chặt chẽ RBAC, NetworkPolicy và Kyverno (Safety Gate) để giới hạn Blast-Radius.
+- **Khả năng kiểm toán và toàn vẹn dữ liệu**: Kết hợp S3 Object Lock (WORM) và DynamoDB (Idempotency) đảm bảo mọi hành động can thiệp của AI đều có vết, không thể xóa sửa, và không xảy ra tình trạng chạy đè kịch bản.
 
 ## 4. Multi-tenant approach
 - Namespace-based: tenant-a, tenant-b, self-heal-system
