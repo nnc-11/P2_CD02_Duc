@@ -190,17 +190,6 @@
 | 8 | `s3-audit-objects.png` | Executor đã chạy, 100% audit coverage | ✅ Có ảnh |
 | 9 | `dynamodb-items.png` | Idempotency lock hoạt động, duplicate prevention | ✅ Có ảnh |
 
-### Những ảnh còn thiếu (cần bổ sung)
-
-Theo `MANUAL_SCREENSHOT_TASKS.md`, các nhóm ảnh sau chưa có trong thư mục `evidence/images/` và cần được thu thập:
-
-| Nhóm | Ảnh cần thiếu | Mức độ ưu tiên |
-|---|---|---|
-| **Cost** | `cost-explorer-by-service.png`, `cost-explorer-table.png`, `billing-dashboard.png` | 🔴 Cao — W12 bắt buộc |
-| **Deployment** | `argocd-dashboard.png`, `argocd-app-detail.png`, `github-actions.png` | 🔴 Cao |
-| **SLO/Observability** | `slo-cloudwatch-metrics.png`, `slo-cwl-query.png`, `cwl-correlation-trace.png` | 🟡 Trung bình |
-| **Security bổ sung** | `s3-retention.png` (default retention policy) | 🟡 Trung bình |
-
 ---
 
 > **Tài liệu liên quan:**
